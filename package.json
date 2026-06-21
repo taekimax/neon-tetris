@@ -1,0 +1,22 @@
+{
+  "name": "neon-tetris-vs-ai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "three": "^0.164.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.164.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vitest": "^1.6.0"
+  }
+}

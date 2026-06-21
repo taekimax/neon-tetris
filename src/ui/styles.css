@@ -1,0 +1,390 @@
+:root {
+  --player: #e52521; /* Mario red */
+  --ai: #43b047; /* Luigi green */
+  --coin: #fbd000;
+  --sky: #5c94fc;
+  --slot: #8a9ad0;
+  --slot-hi: #cdd8f2;
+  --slot-lo: #3c4878;
+  --btn: #6f7fc0;
+  --ink: #ffffff;
+  --label: #e7ecff;
+  --y: #fbd000;
+  --g: #43b047;
+  --p: #c08bff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  background: var(--sky);
+  overflow: hidden;
+  font-family: 'VT323', monospace;
+  color: var(--ink);
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+#game {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hud,
+#overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+#overlay {
+  pointer-events: auto;
+}
+
+/* shared Minecraft bevel */
+.mc-slot {
+  background: var(--slot);
+  border: 3px solid #1c1c1c;
+  box-shadow: inset 3px 3px 0 var(--slot-hi), inset -3px -3px 0 var(--slot-lo);
+}
+.mc-btn {
+  background: var(--btn);
+  border: 3px solid #1c1c1c;
+  box-shadow: inset 3px 3px 0 #a9a9a9, inset -3px -3px 0 #2c2c2c;
+  cursor: pointer;
+  transition: filter 0.1s ease, transform 0.1s ease;
+}
+.mc-btn:hover {
+  filter: brightness(1.18);
+}
+.mc-btn:active {
+  box-shadow: inset 3px 3px 0 #2c2c2c, inset -3px -3px 0 #a9a9a9;
+}
+
+/* ---- Top bar ---- */
+.topbar {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.topbar h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 var(--player), 5px 5px 0 rgba(0, 0, 0, 0.3);
+}
+.topbar .sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #ffffff;
+  margin-top: 8px;
+  text-shadow: 2px 2px 0 #2f3b1b;
+}
+
+/* ---- Side panels (inventory slots) ---- */
+.panel {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 184px;
+  padding: 16px 14px;
+  border-radius: 2px;
+}
+.panel.left {
+  left: 22px;
+}
+.panel.right {
+  right: 22px;
+}
+.panel h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+.panel.left h2 {
+  color: var(--player);
+}
+.panel.right h2 {
+  color: var(--ai);
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 8px 0;
+}
+.stat .label {
+  color: var(--label);
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 1px;
+  font-size: 9px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+.stat .value {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+
+.mini-label {
+  color: var(--label);
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 1px;
+  font-size: 9px;
+  text-transform: uppercase;
+  margin: 14px 0 8px;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+
+.minipiece {
+  display: grid;
+  grid-template-columns: repeat(4, 13px);
+  grid-auto-rows: 13px;
+  gap: 2px;
+  margin: 4px 0;
+}
+.minipiece .cell {
+  width: 13px;
+  height: 13px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15);
+}
+.minipiece .cell.on {
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.5), inset -2px -2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.hold-box {
+  min-height: 14px;
+}
+
+.combo-badge {
+  margin-top: 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--coin);
+  height: 16px;
+  text-shadow: 2px 2px 0 #6a4a00;
+}
+
+/* incoming garbage shape preview */
+.gviz {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  margin-top: 6px;
+  min-height: 14px;
+}
+.gviz-empty {
+  color: var(--label);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+}
+.grow {
+  display: flex;
+  gap: 1px;
+}
+.gcell {
+  width: 10px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ---- Overlay screens ---- */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(14, 20, 42, 0.74);
+  backdrop-filter: blur(3px);
+}
+.screen.hidden {
+  display: none;
+}
+.screen .big {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 40px;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 4px 4px 0 #1c1c1c, 6px 6px 0 rgba(0, 0, 0, 0.35);
+}
+.screen .tag {
+  color: #ffffff;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  max-width: 560px;
+  text-align: center;
+  line-height: 1.35;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+
+.diff-row {
+  display: flex;
+  gap: 18px;
+  margin-top: 8px;
+}
+.diff-btn {
+  width: 132px;
+  padding: 20px 0;
+  border-radius: 2px;
+  background: #f4f7ff;
+  border: 3px solid #1c1c1c;
+  box-shadow: inset 3px 3px 0 #ffffff, inset -3px -3px 0 #b9c4e8, 4px 4px 0 rgba(0, 0, 0, 0.25);
+  color: #2b2b2b;
+  font-family: 'Press Start 2P', monospace;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.diff-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: inset 3px 3px 0 #ffffff, inset -3px -3px 0 #b9c4e8, 6px 6px 0 rgba(0, 0, 0, 0.25);
+}
+.diff-btn .n {
+  font-size: 34px;
+  display: block;
+  text-shadow: 3px 3px 0 #2b2b2b;
+}
+.diff-btn .t {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #e8e8e8;
+  margin-top: 8px;
+  display: block;
+}
+.diff-btn[data-d='1'] .n {
+  color: var(--g);
+}
+.diff-btn[data-d='2'] .n {
+  color: var(--y);
+}
+.diff-btn[data-d='3'] .n {
+  color: var(--ai);
+}
+
+.btn {
+  padding: 14px 30px;
+  border-radius: 2px;
+  background: #3c4878;
+  border: 3px solid #1c1c1c;
+  box-shadow: inset 3px 3px 0 #6b7aad, inset -3px -3px 0 #232c4a, 4px 4px 0 rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #1c1c1c;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.btn:hover {
+  transform: translate(-2px, -2px);
+  filter: brightness(1.12);
+}
+.btn.primary {
+  background: #2f9e3a;
+  box-shadow: inset 3px 3px 0 #6fd87a, inset -3px -3px 0 #1f7d2a, 4px 4px 0 rgba(0, 0, 0, 0.25);
+}
+.btn.ghost {
+  background: #9a3b3b;
+  box-shadow: inset 3px 3px 0 #cf6a6a, inset -3px -3px 0 #6e2424, 4px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.controls-hint {
+  margin-top: 12px;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #ffffff;
+  line-height: 1.5;
+  text-align: center;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
+.controls-hint b {
+  color: var(--y);
+}
+
+/* ---- Floating popups + flash ---- */
+.popup-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.popup {
+  position: absolute;
+  left: 50%;
+  top: 36%;
+  transform: translate(-50%, -50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 30px;
+  letter-spacing: 2px;
+  text-shadow: 3px 3px 0 #2b2b2b, 5px 5px 0 rgba(0, 0, 0, 0.3);
+  animation: pop 0.9s ease-out forwards;
+  white-space: nowrap;
+}
+@keyframes pop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -80%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -120%) scale(0.92);
+    opacity: 0;
+  }
+}
+.popup.player {
+  color: var(--player);
+}
+.popup.ai {
+  color: var(--ai);
+}
+
+#flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.muted-toggle {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #ffffff;
+  padding: 9px 12px;
+  border-radius: 2px;
+  text-shadow: 2px 2px 0 #2b2b2b;
+}
