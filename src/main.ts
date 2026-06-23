@@ -3,6 +3,7 @@ import { Scene } from './render/scene';
 import { BoardView } from './render/boardView';
 import { Effects } from './render/effects';
 import { Input, type Cmd } from './render/input';
+import { MobileInput } from './render/mobileInput';
 import { AudioEngine } from './render/audio';
 import { Hud } from './ui/hud';
 import { Menu } from './ui/menu';
@@ -33,14 +34,33 @@ let playerView: BoardView | null = null;
 let aiView: BoardView | null = null;
 let match: Match | null = null;
 let input: Input;
+let mobileInput: MobileInput | null = null;
 let state: State = State.Menu;
 let currentMode: GameMode = 'vs';
+const mobileControlsQuery = window.matchMedia('(any-pointer: coarse), (pointer: coarse)');
 
 function resize() {
-  scene.resize(window.innerWidth, window.innerHeight);
+  const viewport = window.visualViewport;
+  const w = Math.round(viewport?.width ?? window.innerWidth);
+  const h = Math.round(viewport?.height ?? window.innerHeight);
+  scene.resize(w, h);
+  if (playerView) {
+    layoutFields(currentMode);
+    positionMute(currentMode);
+  }
+  syncMobileInput();
 }
 window.addEventListener('resize', resize);
+window.visualViewport?.addEventListener('resize', resize);
 resize();
+
+function isCompactLayout(): boolean {
+  return mobileControlsQuery.matches || window.innerWidth < 820 || window.innerWidth / window.innerHeight < 0.75;
+}
+
+function syncMobileInput() {
+  mobileInput?.setActive(state === State.Playing && mobileControlsQuery.matches);
+}
 
 function engineOf(who: 'player' | 'ai'): Engine {
   return who === 'player' ? match!.player : match!.ai;
@@ -160,33 +180,53 @@ function onCmd(c: Cmd) {
 
 input = new Input(onCmd);
 input.bind();
+mobileInput = new MobileInput({
+  root: overlay,
+  onCommand: onCmd,
+  onMenu: () => {
+    if (state === State.Playing) togglePause();
+  },
+});
+mobileInput.bind();
+const legacyMobileControlsQuery = mobileControlsQuery as MediaQueryList & {
+  addListener?: (listener: () => void) => void;
+};
+if (typeof mobileControlsQuery.addEventListener === 'function') {
+  mobileControlsQuery.addEventListener('change', syncMobileInput);
+} else {
+  legacyMobileControlsQuery.addListener?.(syncMobileInput);
+}
 
 function togglePause() {
   if (state === State.Playing) {
     state = State.Paused;
+    syncMobileInput();
     menu.showPause(
       () => {
         state = State.Playing;
         menu.hide();
+        syncMobileInput();
       },
       () => toMenu(),
     );
   } else if (state === State.Paused) {
     state = State.Playing;
     menu.hide();
+    syncMobileInput();
   }
 }
 
 function layoutFields(mode: GameMode) {
   const off = (COLS - 1) / 2;
+  const spread = isCompactLayout() ? 5.8 : 9;
   if (!playerView) return;
   if (mode === 'single') {
     playerView.group.position.x = 0 - off;
     if (aiView) aiView.group.visible = false;
   } else {
-    playerView.group.position.x = -9 - off;
+    playerView.group.position.x = -spread - off;
     if (aiView) {
-      aiView.group.position.x = 9 - off;
+      aiView.group.position.x = spread - off;
       aiView.group.visible = true;
     }
   }
@@ -218,6 +258,7 @@ function startGame(mode: GameMode, d: Difficulty) {
   positionMute(mode);
   menu.hide();
   state = State.Playing;
+  syncMobileInput();
 }
 
 function startSame() {
@@ -229,10 +270,12 @@ function startSame() {
   positionMute(currentMode);
   menu.hide();
   state = State.Playing;
+  syncMobileInput();
 }
 
 function toMenu() {
   state = State.Menu;
+  syncMobileInput();
   audio.stopBgm();
   menu.showStart(() => startGame('single', 1), (d) => startGame('vs', d));
 }
@@ -282,6 +325,7 @@ function frame(now: number) {
     }
     if (match.state === 'over') {
       state = State.Over;
+      syncMobileInput();
       audio.sfx('over');
       if (currentMode === 'single') {
         menu.showSingleOver(match.player.lines, match.player.score, startSame, toMenu);

@@ -157,6 +157,9 @@ export class Scene {
   }
 
   resize(w: number, h: number) {
+    const compact = w < 820 || w / h < 0.75;
+    this.camBase.set(0, compact ? 13 : 11, compact ? 52 : 40);
+    this.camTarget.set(0, compact ? 10 : 9.5, 0);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
